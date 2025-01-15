@@ -43,24 +43,24 @@
                 regulator-always-on;
                 regulator-boot-on;
         };
+
 /*
-        reg_usb_5v_vbus: regulator-usb5v-vbus {
+        proslic_reset: proslic-reset-regulator {
                 compatible = "regulator-fixed";
-                regulator-name = "usb_5v_vbus";
-                regulator-min-microvolt = <5000000>;
-                regulator-max-microvolt = <5000000>;
                 pinctrl-names = "default";
-                pinctrl-0 = <&pinctrl_reg_usb_5v_vbus>;
-                gpio = <&gpio1 8 GPIO_ACTIVE_HIGH>;
+                pinctrl-0 = <&pinctrl_slic>;
                 enable-active-high;
+                gpio = <&gpio1 12 GPIO_ACTIVE_HIGH>;
+                regulator-name = "slic_reset";
+                regulator-always-on;
         };
 */
+
 	// FIXME: Use extcon device provided by charger driver when available
 	extcon_usb: extcon_iddig {
 		compatible = "linux,extcon-usb-gpio";
                 pinctrl-names = "default";
                 pinctrl-0 = <&pinctrl_reg_usb_5v_vbus>;
-//                vbus-gpio = <&gpio1 8 GPIO_ACTIVE_HIGH>;
 		id-gpio = <&gpio1 7 GPIO_ACTIVE_HIGH>;
                 vbuspwr-gpio = <&gpio1 8 GPIO_ACTIVE_HIGH>;
 	};
@@ -90,13 +90,40 @@
 
 		cpudai: simple-audio-card,cpu {
 			sound-dai = <&sai3>;
-	/*		dai-tdm-slot-num = <2>;
-			dai-tdm-slot-width = <32>;*/
 		};
 
 		codecdai: simple-audio-card,codec {
 			sound-dai = <&tlv320aic3x>;
 			clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_SAI3_MCLK1>;
+		};
+	};
+
+	spdif_out: spdif-out {
+		status = "okay";
+		compatible = "linux,spdif-dir";
+		#sound-dai-cells = <0>;
+	};
+
+	codec_dummy: codec_dummy {
+		compatible = "asoc,snd-soc-dummy";
+		#sound-dai-cells = <0>;
+		status = "okay";
+	};
+
+	sound_proslic: sound-proslic {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "proslic-audio";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,frame-master = <&cpudai2>;
+		simple-audio-card,bitclock-master = <&cpudai2>;
+
+		cpudai2: simple-audio-card,cpu {
+			sound-dai = <&sai2>;
+		};
+
+		codecdai2: simple-audio-card,codec {
+			sound-dai = <&codec_dummy>;
+			clocks = <&clk IMX8MP_CLK_SAI2>;
 		};
 	};
 };
@@ -147,6 +174,30 @@
 	cs-gpios = <&gpio5 9 GPIO_ACTIVE_LOW>; 
 	status = "okay";
 
+	spidev0: spi@0 {
+		reg = <0>;
+		compatible = "rohm,dh2228fv";
+                spi-max-frequency = <10000000>;
+                spi-cpha = <1>;
+                spi-cpol = <1>;
+	};
+/*
+	proslic_spi: proslic_spi@0 {
+		#sound-dai-cells = <0>;
+		compatible = "skyworks,proslic_spi";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_slic>;
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+		spi-cpha = <1>;
+		spi-cpol = <1>;
+		number_channels = <2>;
+		debug_level = <4>;
+		channel_count = <1>;
+		reset_gpio = <&gpio1 12 0>;
+	};
+*/
 };
 
 &ecspi2 {
@@ -582,12 +633,12 @@
 
 
 &sai2 {
-/*	#sound-dai-cells = <0>; */
+	#sound-dai-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sai2>;
 	assigned-clocks = <&clk IMX8MP_CLK_SAI2>;
 	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
-	assigned-clock-rates = <12288000>;
+	assigned-clock-rates = <8192000>;
 	status = "okay";
 };
 
@@ -1130,6 +1181,12 @@
 			MX8MP_IOMUXC_SAI1_RXC__GPIO4_IO01		0x59
 			MX8MP_IOMUXC_SAI1_RXD0__GPIO4_IO02		0x59
 			MX8MP_IOMUXC_SAI1_RXD1__GPIO4_IO03		0x59 
+		>;
+	};
+
+	pinctrl_slic: proslicset {
+		fsl,pins = <
+			MX8MP_IOMUXC_GPIO1_IO12__GPIO1_IO12		0x59
 		>;
 	};
 };
