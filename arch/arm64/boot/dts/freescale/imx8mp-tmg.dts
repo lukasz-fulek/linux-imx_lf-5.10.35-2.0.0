@@ -174,17 +174,17 @@
 	cs-gpios = <&gpio5 9 GPIO_ACTIVE_LOW>; 
 	status = "okay";
 
-	spidev0: spi@0 {
+	/*spidev0: spi@0 {
 		reg = <0>;
 		compatible = "rohm,dh2228fv";
                 spi-max-frequency = <10000000>;
                 spi-cpha = <1>;
                 spi-cpol = <1>;
-	};
-/*
+	};*/
+
 	proslic_spi: proslic_spi@0 {
 		#sound-dai-cells = <0>;
-		compatible = "skyworks,proslic_spi";
+		compatible = "cobham,proslic_spi";
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_slic>;
@@ -192,12 +192,10 @@
 		spi-max-frequency = <10000000>;
 		spi-cpha = <1>;
 		spi-cpol = <1>;
-		number_channels = <2>;
 		debug_level = <4>;
 		channel_count = <1>;
 		reset_gpio = <&gpio1 12 0>;
 	};
-*/
 };
 
 &ecspi2 {
